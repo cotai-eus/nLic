@@ -1,312 +1,165 @@
-# API CN - Sistema de Contratações Públicas
+# nRadar - Sistema de Monitoramento de Licitações
 
-[![Docker](https://img.shields.io/badge/Docker-24.0+-blue.svg)](https://docs.docker.com/)
-[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115.14-green.svg)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
+O nRadar é um sistema automatizado de monitoramento de oportunidades no Portal Nacional de Contratações Públicas (PNCP), com foco em personalização via Perfis de Interesse. Ele realiza chamadas à API pública do PNCP, filtra os resultados localmente e envia notificações para os usuários com base em suas preferências.
 
-Sistema completo para gerenciamento de contratações públicas com integração ao Portal Nacional de Contratações Públicas (PNCP).
+## Visão Geral
 
-## 🚀 Início Rápido
+Este repositório contém o backend completo do nRadar, construído com FastAPI, PostgreSQL, Celery e Redis. Ele é projetado para ser robusto, escalável e fácil de implantar usando Docker.
 
-### Pré-requisitos
+## Funcionalidades
 
-- Docker 24.0+ e Docker Compose V2
-- Make (opcional, mas recomendado)
-- Git
+- **Autenticação de Usuários:** Cadastro, login (JWT), recuperação e verificação de senha.
+- **Perfis de Interesse:** Criação, leitura, atualização e exclusão de perfis personalizados para monitoramento de licitações.
+- **Monitoramento de Oportunidades:** Robô Celery que busca periodicamente novas oportunidades no PNCP com base nos perfis de interesse.
+- **Notificações:** Envio de notificações por e-mail (com placeholders para push).
 
-### Configuração Inicial
+## Stack Tecnológica
 
-```bash
-# Clone o repositório
-git clone <repository-url>
-cd apiCN
+- **Backend:** Python 3.12+ (FastAPI)
+- **Banco de Dados:** PostgreSQL
+- **Agendamento:** Celery + Redis
+- **Autenticação:** FastAPI Users (JWT, bcrypt)
+- **Requisições HTTP:** httpx
+- **Containerização:** Docker + Docker Compose
+- **Gerenciamento de Dependências:** Poetry
 
-# Configure o ambiente
-make setup
-
-# Configure as variáveis de ambiente
-cp .env.example .env
-# Edite o arquivo .env com suas configurações
-
-# Inicie o ambiente de desenvolvimento
-make dev
-```
-
-### Acesso às Aplicações
-
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **Documentação da API**: http://localhost:8000/docs
-- **pgAdmin**: http://localhost:5050
-- **Adminer** (dev): http://localhost:8080
-
-## 📁 Estrutura do Projeto
+## Estrutura de Diretórios
 
 ```
-apiCN/
-├── backend/                 # API FastAPI
+nRadar/
+├── .github/                  # Workflows de CI/CD
+├── backend/                  # Código-fonte do backend (FastAPI)
 │   ├── app/
-│   │   ├── api/            # Endpoints da API
-│   │   ├── core/           # Configurações
-│   │   ├── db/             # Banco de dados
-│   │   ├── models/         # Modelos SQLAlchemy
-│   │   ├── schemas/        # Schemas Pydantic
-│   │   ├── services/       # Lógica de negócio
-│   │   └── main.py         # App principal
-│   ├── tests/              # Testes
-│   ├── Dockerfile          # Container backend
-│   └── pyproject.toml      # Dependências Python
-├── frontend/               # App React
-│   ├── src/
-│   │   ├── components/     # Componentes React
-│   │   ├── pages/          # Páginas
-│   │   ├── hooks/          # Custom hooks
-│   │   ├── services/       # Serviços API
-│   │   └── types/          # Tipos TypeScript
-│   ├── Dockerfile          # Container frontend
-│   └── package.json        # Dependências Node.js
-├── config/                 # Configurações
-│   ├── nginx/              # Config Nginx
-│   ├── pgadmin/            # Config pgAdmin
-│   └── redis.conf          # Config Redis
-├── scripts/                # Scripts automação
-├── e2e-tests/              # Testes E2E
-├── performance-tests/      # Testes performance
-├── docker-compose.yml      # Produção
-├── docker-compose.dev.yml  # Desenvolvimento
-├── docker-compose.test.yml # Testes
-├── Makefile               # Comandos úteis
-└── README.md              # Documentação
+│   │   ├── main.py            # Ponto de entrada da aplicação FastAPI
+│   │   ├── models/              # Modelos de dados (SQLAlchemy e Pydantic)
+│   │   ├── auth/                # Módulo de autenticação
+│   │   ├── services/           # Lógica de negócios e integração com PNCP
+│   │   ├── workers/           # Workers Celery
+│   │   ├── utils/               # Utilitários e helpers
+│   │   ├── api/
+│   │   │   └── v1/
+│   │   │       └── endpoints/ # Endpoints REST
+│   │   └── celery_app.py      # Configuração do Celery
+│   ├── tests/                 # Testes unitários e de integração
+│   ├── pyproject.toml
+│   ├── poetry.lock
+│   └── Dockerfile
+├── db/                       # Migrações, seeds e scripts de banco de dados
+│   ├── migrations/
+│   ├── seeds/
+│   └── init.sql               # Script de inicialização do DB
+├── scripts/                  # Scripts utilitários
+│   └── setup_env.sh           # Script para configurar o ambiente
+├── docker-compose.yml
+├── .env.example              # Exemplo de variáveis de ambiente
+├── .gitignore
+├── README.md
 ```
 
-## 🛠️ Comandos Disponíveis
+## Setup do Ambiente de Desenvolvimento
 
-### Desenvolvimento
+1.  **Pré-requisitos:**
+    - Docker e Docker Compose instalados.
+    - Git instalado.
 
-```bash
-make dev           # Inicia ambiente de desenvolvimento
-make stop          # Para todos os serviços
-make restart       # Reinicia serviços
-make logs          # Mostra logs de todos os serviços
-make logs-backend  # Logs específicos do backend
-make logs-frontend # Logs específicos do frontend
-```
+2.  **Clone o repositório:**
+    ```bash
+    git clone https://github.com/seu-usuario/nRadar.git
+    cd nRadar
+    ```
 
-### Produção
+3.  **Configure as variáveis de ambiente:**
+    Crie um arquivo `.env` na raiz do projeto, copiando o `.env.example`:
+    ```bash
+    cp .env.example .env
+    ```
+    Edite o arquivo `.env` e preencha a `SECRET_KEY` com uma string aleatória e segura. As outras variáveis já vêm com valores padrão para desenvolvimento.
 
-```bash
-make prod          # Inicia ambiente de produção
-make build         # Builda todas as imagens
-```
+4.  **Inicie os serviços com Docker Compose:**
+    ```bash
+    docker-compose up -d --build
+    ```
+    Este comando irá:
+    - Construir as imagens Docker para o backend, Celery Worker e Celery Beat.
+    - Iniciar os contêineres do PostgreSQL, Redis, Backend, Celery Worker e Celery Beat.
+    - Executar o `db/init.sql` para criar as tabelas iniciais no banco de dados.
 
-### Testes
+5.  **Verifique o status dos serviços:**
+    ```bash
+    docker-compose ps
+    ```
+    Todos os serviços devem estar `Up`.
 
-```bash
-make test          # Executa todos os testes
-make test-backend  # Testes do backend apenas
-make test-frontend # Testes do frontend apenas
-make lint          # Executa linting
-```
+6.  **Acesse a API:**
+    A API do FastAPI estará disponível em `http://localhost:8000`.
+    A documentação interativa (Swagger UI) estará em `http://localhost:8000/docs`.
 
-### Banco de Dados
+## Uso da API
 
-```bash
-make migrate       # Executa migrações
-make migration MSG="descrição"  # Cria nova migração
-make backup        # Backup do banco
-make restore FILE=backup.sql.gz # Restaura backup
-make seed          # Popula com dados exemplo
-```
+Consulte a documentação interativa em `http://localhost:8000/docs` para detalhes sobre os endpoints de autenticação e gerenciamento de perfis.
 
-### Utilitários
+### Exemplo de Fluxo de Autenticação e Criação de Perfil
 
-```bash
-make shell-backend # Acessa shell do backend
-make shell-db      # Acessa shell do PostgreSQL
-make health        # Verifica saúde dos serviços
-make clean         # Remove containers e volumes
-```
+1.  **Registrar um novo usuário:**
+    `POST /auth/register`
+    ```json
+    {
+        "email": "test@example.com",
+        "password": "your_secure_password"
+    }
+    ```
 
-## 🧪 Testes
+2.  **Fazer login para obter um token JWT:**
+    `POST /auth/jwt/login`
+    ```json
+    {
+        "username": "test@example.com",
+        "password": "your_secure_password"
+    }
+    ```
+    Copie o `access_token` da resposta.
 
-O projeto inclui uma suíte completa de testes:
+3.  **Criar um perfil de interesse:**
+    `POST /api/v1/perfis`
+    Adicione o `Bearer Token` (o `access_token` obtido no login) no cabeçalho `Authorization`.
+    ```json
+    {
+        "nomePerfil": "Equipamentos de TI - SP",
+        "palavrasChave": ["computador", "servidor", "notebook"],
+        "uf": "SP",
+        "notificacaoEmail": true
+    }
+    ```
 
-### Backend
-- **Testes Unitários**: Modelos, serviços, utilitários
-- **Testes de Integração**: APIs, banco de dados
-- **Cobertura**: Mínimo 80% de cobertura de código
+## Testes
 
-### Frontend
-- **Testes Unitários**: Componentes, hooks, utilitários
-- **Testes de Integração**: Fluxos completos
-- **Testes E2E**: Playwright para testes end-to-end
+Para executar os testes (ainda em desenvolvimento):
 
-### Performance
-- **Testes de Carga**: K6 para testes de performance
-- **Monitoramento**: Métricas de resposta e throughput
+1.  **Acesse o contêiner do backend:**
+    ```bash
+    docker-compose exec backend bash
+    ```
 
-### Segurança
-- **OWASP ZAP**: Testes de segurança automatizados
-- **Análise de Dependências**: Verificação de vulnerabilidades
+2.  **Execute os testes com Poetry:**
+    ```bash
+    poetry run pytest
+    ```
 
-### Executar Testes
+## CI/CD (GitHub Actions)
 
-```bash
-# Todos os testes
-./scripts/test.sh
+O projeto inclui workflows de GitHub Actions em `.github/workflows/` para:
 
-# Testes específicos
-make test-backend
-make test-frontend
+- **Testes e Lint:** Executar testes e verificações de lint a cada push ou Pull Request.
+- **Build e Push de Imagens Docker:** Construir e enviar imagens Docker para um registry (configuração futura).
 
-# Testes E2E
-docker-compose -f docker-compose.test.yml run --rm e2e-test
+## Contribuição
 
-# Testes de performance
-docker-compose -f docker-compose.test.yml run --rm performance-test
-```
+1.  Faça um fork do repositório.
+2.  Crie uma nova branch para sua feature (`git checkout -b feature/minha-nova-feature`).
+3.  Implemente suas mudanças e escreva testes.
+4.  Certifique-se de que todos os testes passem e o lint esteja limpo.
+5.  Crie um Pull Request para a branch `main`.
 
-## 🔒 Segurança
+## Licença
 
-### Autenticação
-- JWT tokens com refresh automático
-- Senhas hasheadas com bcrypt
-- Rate limiting configurável
-- Sessões seguras
-
-### Infraestrutura
-- HTTPS obrigatório em produção
-- Headers de segurança configurados
-- Certificados SSL/TLS
-- Isolamento de containers
-
-### Banco de Dados
-- Conexões criptografadas
-- Pool de conexões otimizado
-- Backup automático
-- Isolamento por ambiente
-
-## 📊 Monitoramento
-
-### Logs
-- Logs estruturados com Loguru
-- Rotação automática de arquivos
-- Níveis de log configuráveis
-- Correlação de requisições
-
-### Health Checks
-- Verificação de saúde de todos os serviços
-- Monitoramento de conectividade
-- Alertas automáticos
-- Métricas de performance
-
-### Métricas
-- Tempo de resposta da API
-- Taxa de erro por endpoint
-- Uso de recursos (CPU, memória)
-- Conexões de banco de dados
-
-## 🚀 Deploy
-
-### Desenvolvimento
-```bash
-make dev
-```
-
-### Produção
-```bash
-# Configure variáveis de produção
-cp .env.example .env.prod
-# Edite .env.prod com configurações de produção
-
-# Inicie produção
-ENVIRONMENT=production make prod
-```
-
-### CI/CD
-O projeto inclui configurações para:
-- GitHub Actions
-- GitLab CI
-- Jenkins
-- Docker Hub/Registry
-
-## 🔧 Configuração
-
-### Variáveis de Ambiente
-
-Principais variáveis de configuração:
-
-```env
-# Banco de Dados
-DATABASE_URL=postgresql+asyncpg://user:pass@host:port/db
-POSTGRES_DB=apicn_db
-POSTGRES_USER=apicn_user
-POSTGRES_PASSWORD=secure_password
-
-# Segurança
-SECRET_KEY=your-secret-key
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-BCRYPT_ROUNDS=12
-
-# Redis
-REDIS_URL=redis://:password@host:port/db
-
-# PNCP
-PNCP_API_URL=https://pncp.gov.br/api/consulta/v1
-PNCP_API_KEY=your_api_key
-
-# Frontend
-VITE_API_BASE_URL=http://localhost:8000/api/v1
-VITE_APP_NAME=API CN
-```
-
-### Customização
-
-#### Backend
-- **Modelos**: Adicione novos modelos em `backend/app/models/`
-- **Endpoints**: Crie novos endpoints em `backend/app/api/v1/endpoints/`
-- **Serviços**: Implemente lógica em `backend/app/services/`
-
-#### Frontend
-- **Componentes**: Adicione em `frontend/src/components/`
-- **Páginas**: Crie em `frontend/src/pages/`
-- **Hooks**: Desenvolva em `frontend/src/hooks/`
-
-## 📝 Documentação Adicional
-
-- [Guia de Desenvolvimento](docs/development.md)
-- [Arquitetura do Sistema](docs/architecture.md)
-- [Guia de Deployment](docs/deployment.md)
-- [Troubleshooting](docs/troubleshooting.md)
-- [Contribuição](docs/contributing.md)
-
-## 🤝 Contribuição
-
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto está licenciado sob a MIT License - veja o arquivo [LICENSE](LICENSE) para detalhes.
-
-## 🆘 Suporte
-
-- **Issues**: [GitHub Issues](https://github.com/your-repo/issues)
-- **Documentação**: [Wiki do Projeto](https://github.com/your-repo/wiki)
-- **Slack**: #apicn-suporte
-
-## 📈 Status do Projeto
-
-- ✅ **Backend**: Completo e testado
-- ✅ **Frontend**: Completo e testado
-- ✅ **Docker**: Configuração completa
-- ✅ **Testes**: Suíte completa implementada
-- ✅ **CI/CD**: Pipeline configurado
-- ✅ **Documentação**: Completa e atualizada
-- ✅ **Segurança**: Implementada e auditada
-- 🚀 **Produção**: Pronto para deploy
+Este projeto está licenciado sob a [Licença MIT](LICENSE).
