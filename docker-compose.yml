@@ -1,36 +1,20 @@
 version: '3.8'
 
 services:
-  backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app
-    environment:
-      - DATABASE_URL=postgresql+psycopg://user:password@db:5432/nradardb
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - SECRET_KEY=your_super_secret_key_here
-    depends_on:
-      - db
-      - redis
-
   db:
     image: postgres:15-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    env_file:
+      - ./.env
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=nradardb
+      - UVICORN_LOG_LEVEL=debug
+      - SECRET_KEY=cd2dd31f1ff33fddfefb9297d334a5de1bed6b0b56d7d4c50aa243c94cf4dd1a
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d nradardb"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -40,38 +24,54 @@ services:
     ports:
       - "6379:6379"
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app
+    env_file:
+      - ./.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      - UVICORN_LOG_LEVEL=debug
+    command: ["/app/.venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
   celery_worker:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     volumes:
-      - ./backend:/app
-    environment:
-      - DATABASE_URL=postgresql+psycopg://user:password@db:5432/nradardb
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - SECRET_KEY=your_super_secret_key_here
+      - ./backend/app:/app/app
+    env_file:
+      - ./.env
     depends_on:
-      - redis
-      - db
-    command: celery -A app.celery_app worker --loglevel=info
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+    command: ["/app/.venv/bin/celery", "-A", "app.celery_app.app", "worker", "--loglevel=info"]
 
   celery_beat:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     volumes:
-      - ./backend:/app
-    environment:
-      - DATABASE_URL=postgresql+psycopg://user:password@db:5432/nradardb
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - SECRET_KEY=your_super_secret_key_here
-      - PYTHONPATH=/app
+      - ./backend/app:/app/app
+    env_file:
+      - ./.env
     depends_on:
-      - redis
-      - db
-    command: python app/run_celery_beat.py
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+    command: ["/app/.venv/bin/celery", "-A", "app.celery_app.app", "beat", "-l", "info"]
 
 volumes:
   postgres_data:

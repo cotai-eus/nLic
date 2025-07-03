@@ -1,5 +1,4 @@
 from fastapi_users import FastAPIUsers
-from fastapi_users import FastAPIUsers
 from fastapi_users.authentication import AuthenticationBackend, JWTStrategy, BearerTransport
 from fastapi_users_db_sqlalchemy import UUID_ID
 
@@ -8,6 +7,7 @@ from app.core.config import settings
 from app.models.user import User
 
 def get_jwt_strategy() -> JWTStrategy:
+    print("JWTStrategy SECRET_KEY:", settings.SECRET_KEY)
     return JWTStrategy(secret=settings.SECRET_KEY, lifetime_seconds=3600)
 
 bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")

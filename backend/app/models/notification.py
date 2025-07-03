@@ -17,7 +17,7 @@ class Notification(Base):
     conteudo = Column(JSONB, nullable=True)
 
     user = relationship("User", back_populates="notifications")
-    perfil = relationship("PerfilDeInteresse", back_populates="notifications")
+    perfil = relationship("app.models.perfil.PerfilDeInteresse", back_populates="notifications")
 
 class NotificationLog(Base):
     __tablename__ = "notification_logs"

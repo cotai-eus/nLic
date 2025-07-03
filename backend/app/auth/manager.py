@@ -1,14 +1,14 @@
 from typing import Optional
 
 from fastapi import Depends, Request
-from fastapi_users import BaseUserManager
-from fastapi_users_db_sqlalchemy import UUID_IDMixin
+from fastapi_users import BaseUserManager, UUIDIDMixin
+from fastapi_users_db_sqlalchemy import UUID_ID
 
 from app.auth.database import get_user_db
 from app.core.config import settings
 from app.models.user import User
 
-class UserManager(UUID_IDMixin, BaseUserManager[User, UUID_ID]):
+class UserManager(UUIDIDMixin, BaseUserManager[User, UUID_ID]):
     reset_password_token_secret = settings.SECRET_KEY
     verification_token_secret = settings.SECRET_KEY
 
@@ -25,5 +25,9 @@ class UserManager(UUID_IDMixin, BaseUserManager[User, UUID_ID]):
     ):
         print(f"Verification requested for user {user.id}. Verification token: {token}")
 
-async def get_user_manager(user_db=Depends(get_user_db)):
-    yield UserManager(user_db)
+from app.auth.database import get_async_session
+from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
+
+async def get_user_manager():
+    async for session in get_async_session():
+        yield UserManager(SQLAlchemyUserDatabase(session, User))

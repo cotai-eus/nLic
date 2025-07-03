@@ -1,27 +1,36 @@
-# Use a imagem oficial do Python
-FROM python:3.12-slim
+# Stage 1: Builder
+FROM python:3.13-slim as builder
 
-# Define o diretório de trabalho
-WORKDIR /app
-
-# Instala o Poetry
+# Instalar Poetry
 RUN pip install poetry
 
-# Copia os arquivos de dependências do Poetry para o WORKDIR
-COPY backend/pyproject.toml ./pyproject.toml
-COPY backend/poetry.lock ./poetry.lock
+# Definir o diretório de trabalho
+WORKDIR /app
 
-# Copia o arquivo .env para o WORKDIR
-COPY .env ./
+# Copiar os arquivos de dependências
+COPY pyproject.toml poetry.lock ./
 
-# Instala as dependências do projeto
-RUN poetry config virtualenvs.create false && poetry install --only main --no-root --no-interaction --no-ansi
+RUN poetry config virtualenvs.in-project true
 
-# Copia o código da aplicação para o WORKDIR
-COPY backend/app ./app
+# Instalar dependências do projeto
+# --no-root: não instala o pacote do projeto em si
+# --no-dev: não instala as dependências de desenvolvimento
+RUN poetry install --no-root
 
-# Expõe a porta que o FastAPI estará rodando
+# Stage 2: Final Image
+FROM python:3.13-slim
+
+# Definir o diretório de trabalho
+WORKDIR /app
+
+# Copiar o ambiente virtual do builder
+COPY --from=builder /app/.venv /app/.venv
+
+# Ativar o ambiente virtual
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Copiar o código da aplicação
+COPY ./app /app/app
+
+# Expor a porta que o FastAPI vai usar
 EXPOSE 8000
-
-# Comando para iniciar a aplicação
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

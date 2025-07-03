@@ -1,10 +1,7 @@
--- Initial database schema for nRadar
--- This script is used by Docker Compose to initialize the DB.
-
--- Enable pgcrypto for gen_random_uuid()
+-- Habilita a extensão pgcrypto para gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- Function to update updated_at timestamp
+-- Função para atualizar o campo updated_at automaticamente
 CREATE OR REPLACE FUNCTION update_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -13,24 +10,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 1. users table
+-- Tabela: users
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE NOT NULL,
-    is_superuser BOOLEAN DEFAULT FALSE NOT NULL,
-    is_verified BOOLEAN DEFAULT FALSE NOT NULL,
+    hashed_password VARCHAR(255) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    is_superuser BOOLEAN DEFAULT FALSE,
+    is_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now()
 );
 
--- users: updated_at trigger
+-- Trigger para users.updated_at
 CREATE TRIGGER trg_users_updated
 BEFORE UPDATE ON users
 FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
--- 2. interest_profiles table
+-- Tabela: interest_profiles
 CREATE TABLE IF NOT EXISTS interest_profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
@@ -45,50 +42,50 @@ CREATE TABLE IF NOT EXISTS interest_profiles (
     notificacao_email BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now(),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
 );
 
--- interest_profiles: updated_at trigger
+-- Trigger para interest_profiles.updated_at
 CREATE TRIGGER trg_profiles_updated
 BEFORE UPDATE ON interest_profiles
 FOR EACH ROW EXECUTE FUNCTION update_timestamp();
 
--- interest_profiles: indexes
-CREATE INDEX idx_profiles_user ON interest_profiles(user_id);
-CREATE INDEX idx_profiles_palavras_chave ON interest_profiles USING GIN(palavras_chave);
-
--- 3. notifications table
+-- Tabela: notifications
 CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    profile_id UUID NOT NULL,
+    profile_id UUID,
     numero_controle_pncp VARCHAR(50) NOT NULL,
-    tipo VARCHAR(10) NOT NULL, -- 'push' or 'email'
+    tipo VARCHAR(10) NOT NULL,
     enviado_em TIMESTAMP DEFAULT now(),
-    status VARCHAR(20) DEFAULT 'sent', -- 'sent', 'failed', 'pending'
+    status VARCHAR(20) DEFAULT 'sent',
     conteudo JSONB,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (profile_id) REFERENCES interest_profiles(id)
+    CONSTRAINT fk_user_notif
+        FOREIGN KEY(user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_profile_notif
+        FOREIGN KEY(profile_id)
+        REFERENCES interest_profiles(id)
+        ON DELETE SET NULL
 );
 
--- notifications: indexes
-CREATE INDEX idx_notifications_user ON notifications(user_id);
-CREATE INDEX idx_notifications_profile ON notifications(profile_id);
-CREATE UNIQUE INDEX idx_notif_unique ON notifications(user_id, profile_id, numero_controle_pncp);
-
--- 4. notification_logs table
+-- Tabela: notification_logs
 CREATE TABLE IF NOT EXISTS notification_logs (
     id BIGSERIAL PRIMARY KEY,
     notification_id UUID,
     log JSONB,
     created_at TIMESTAMP DEFAULT now(),
-    FOREIGN KEY (notification_id) REFERENCES notifications(id)
+    CONSTRAINT fk_notification_log
+        FOREIGN KEY(notification_id)
+        REFERENCES notifications(id)
+        ON DELETE CASCADE
 );
 
--- notification_logs: index
-CREATE INDEX idx_logs_notification ON notification_logs(notification_id);
-
--- 5. api_call_logs table
+-- Tabela: api_call_logs
 CREATE TABLE IF NOT EXISTS api_call_logs (
     id BIGSERIAL PRIMARY KEY,
     endpoint VARCHAR(255) NOT NULL,
@@ -98,5 +95,12 @@ CREATE TABLE IF NOT EXISTS api_call_logs (
     created_at TIMESTAMP DEFAULT now()
 );
 
--- api_call_logs: index
-CREATE INDEX idx_api_call_endpoint ON api_call_logs(endpoint);
+-- Índices
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_profiles_user ON interest_profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_palavras_chave ON interest_profiles USING GIN(palavras_chave);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_profile ON notifications(profile_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_notif_unique ON notifications(user_id, profile_id, numero_controle_pncp);
+CREATE INDEX IF NOT EXISTS idx_logs_notification ON notification_logs(notification_id);
+CREATE INDEX IF NOT EXISTS idx_api_call_endpoint ON api_call_logs(endpoint);

@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     DATABASE_URL: str
-    SECRET_KEY: str
+    SECRET_KEY: str = "supersecretkey"
     CELERY_BROKER_URL: str
     CELERY_RESULT_BACKEND: str
 
