@@ -6,7 +6,6 @@ from app.services.pncp_service import search_contratacoes_proposta, search_contr
 from app.models.perfil import PerfilDeInteresse # Assuming PerfilDeInteresse is needed for search_contratacoes_proposta
 
 router = APIRouter(
-    prefix="/api/v1/contratacoes",
     tags=["contratacoes"]
 )
 
@@ -23,17 +22,16 @@ async def get_contratacoes_proposta(
         palavras_chave=[],
         prioridade_urgencia="qualquerPrazo",
         uf=None,
-        municipioIbge=None,
-        modalidadeContratacao=codigo_modalidade_contratacao,
-        notificacaoPush=False,
-        notificacaoEmail=False
+        municipio_ibge=None,
+        modalidade_contratacao=codigo_modalidade_contratacao,
+        notificacao_push=False,
+        notificacao_email=False
     )
-    
-    # Override some fields based on query parameters
-    dummy_perfil.modalidadeContratacao = codigo_modalidade_contratacao
-    # The data_final and pagina are handled by the service internally for search_contratacoes_proposta
 
-    result = await search_contratacoes_proposta(dummy_perfil)
+    # Chama o serviço passando os parâmetros relevantes
+    result = await search_contratacoes_proposta(
+        dummy_perfil
+    )
     return result
 
 @router.get("/publicacao")

@@ -12,7 +12,7 @@ COPY pyproject.toml poetry.lock ./
 RUN pip install --no-cache-dir poetry
 
 # Instala as dependências do projeto
-RUN poetry config virtualenvs.create false &&     poetry install --no-interaction --no-ansi --no-root
+RUN poetry config virtualenvs.create false &&     poetry install --no-interaction --no-ansi --no-root &&     poetry add anyio --extras asyncio --group dev
     
 # Copia o código da aplicação
 COPY . .

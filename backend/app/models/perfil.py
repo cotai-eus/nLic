@@ -1,3 +1,4 @@
+import uuid
 from typing import Optional
 from sqlalchemy import Column, String, Boolean, ForeignKey, JSON, TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID
@@ -10,7 +11,7 @@ from pydantic import BaseModel
 class PerfilDeInteresse(Base):
     __tablename__ = "interest_profiles"
 
-    id = Column(UUID, primary_key=True, index=True)
+    id = Column(UUID, primary_key=True, index=True, default=uuid.uuid4)
     user_id = Column(UUID, ForeignKey("users.id"))
     nome_perfil = Column(String(100), index=True)
     palavras_chave = Column(JSON)

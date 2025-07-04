@@ -43,11 +43,11 @@ app.include_router(
     tags=["auth"],
 )
 
-app.include_router(perfis.router)
-app.include_router(contratacoes.router)
-app.include_router(pca.router)
-app.include_router(atas.router)
-app.include_router(contratos.router)
+app.include_router(perfis.router, prefix="/api/v1/perfis", tags=["perfis"])
+app.include_router(contratacoes.router, prefix="/api/v1/contratacoes", tags=["contratacoes"])
+app.include_router(pca.router, prefix="/api/v1/pca", tags=["pca"])
+app.include_router(atas.router, prefix="/api/v1/atas", tags=["atas"])
+app.include_router(contratos.router, prefix="/api/v1/contratos", tags=["contratos"])
 
 @app.get("/")
 def read_root():

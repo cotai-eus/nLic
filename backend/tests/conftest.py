@@ -1,6 +1,3 @@
-import asyncio
-from typing import Generator
-
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -8,20 +5,20 @@ from sqlalchemy.orm import sessionmaker
 
 from app.main import app
 from app.core.config import settings
-from app.db.session import get_db
+from app.db.session import get_async_session as get_db
 from app.db.base_class import Base
 
 # Create a new async engine for the test database
 engine = create_async_engine(settings.TEST_DATABASE_URL, pool_pre_ping=True)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession)
 
-@pytest.fixture(scope="session")
-def event_loop() -> Generator:
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+pytest_plugins = ["anyio"]
 
 @pytest.fixture(scope="session")
+def anyio_backend():
+    return "asyncio"
+
+@pytest.fixture(scope="function")
 async def db() -> AsyncSession:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

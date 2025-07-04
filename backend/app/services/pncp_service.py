@@ -11,10 +11,10 @@ async def _make_pncp_request(endpoint: str, params: Dict[str, Any]) -> List[Dict
     all_results = []
     current_page = params.get("pagina", 1)
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(verify=False) as client:
         while True:
             params["pagina"] = current_page
-            response = await client.get(url, params=params, verify=False) # verify=False para ignorar SSL
+            response = await client.get(url, params=params)
             response.raise_for_status() # Levanta exceção para erros HTTP
             data = response.json()
             
@@ -37,10 +37,10 @@ async def search_contratacoes_proposta(perfil: PerfilDeInteresse) -> List[Dict[s
 
     if perfil.uf:
         params["uf"] = perfil.uf
-    if perfil.municipioIbge:
+    if perfil.municipio_ibge:
         params["codigoMunicipiolbge"] = perfil.municipioIbge
-    if perfil.modalidadeContratacao:
-        params["codigoModalidadeContratacao"] = perfil.modalidadeContratacao
+    if perfil.modalidade_contratacao:
+        params["codigoModalidadeContratacao"] = perfil.modalidade_contratacao
 
     opportunities = await _make_pncp_request("contratacoes/proposta", params)
 

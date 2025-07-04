@@ -272,6 +272,32 @@ O nRadar é um projeto robusto e extensível, com arquitetura escalável, integr
 
 ---
 
+## 💻 Configuração de GitHub para Commits
+
+Para realizar commits com seu usuário do GitHub, configure seu nome e e-mail globalmente:
+https://github.com/cotai-eus/nLic.git
+```bash
+git config --global user.name "cotai-eus"
+git config --global user.email "eus.cotai@gmail.com"
+```
+
+Se quiser configurar apenas para este repositório, remova a flag `--global` e execute dentro da pasta do projeto:
+
+```bash
+git config user.name "SeuNomeNoGitHub"
+git config user.email "seuemail@exemplo.com"
+```
+
+Para autenticação via HTTPS, utilize um [Personal Access Token (PAT)](https://github.com/settings/tokens) ao invés de senha ao fazer push/pull:
+
+```bash
+git push https://<token>@github.com/usuario/repositorio.git
+```
+
+Mais detalhes: [GitHub Docs - Configurar Git](https://docs.github.com/pt/get-started/getting-started-with-git)
+
+---
+
 ```
 
 Se quiser, posso gerar os arquivos Python correspondentes (`models`, `services`, etc.) com base nesse plano. Deseja isso?

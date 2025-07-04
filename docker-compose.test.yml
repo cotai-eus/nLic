@@ -4,11 +4,20 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: nradar_backend_test
-    env_file:
-      - .env
     environment:
-      - PYTHONPATH=/app
-      - DATABASE_URL=${TEST_DATABASE_URL}
+      PYTHONPATH: /app
+      # Use the test database for the main application connection during tests
+      DATABASE_URL: "postgresql+psycopg://testuser:testpassword@postgres-test:5432/testdb"
+      # This one is used by conftest.py, so we set it as well
+      TEST_DATABASE_URL: "postgresql+psycopg://testuser:testpassword@postgres-test:5432/testdb"
+      CELERY_BROKER_URL: "redis://redis-test:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis-test:6379/0"
+    mem_limit: 8g
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
     command: ["poetry", "run", "pytest"]
     networks:
       - nradar_test_net
@@ -16,18 +25,25 @@ services:
   postgres-test:
     image: postgres:15-alpine
     container_name: nradar_postgres_test
-    env_file:
-      - .env
     environment:
-      - POSTGRES_DB=${TEST_POSTGRES_DB}
+      POSTGRES_DB: testdb
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpassword
     networks:
       - nradar_test_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser -d testdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis-test:
     image: redis:7-alpine
     container_name: nradar_redis_test
     networks:
       - nradar_test_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
 
 networks:
   nradar_test_net:
