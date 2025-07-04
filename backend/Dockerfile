@@ -1,36 +1,39 @@
-# Stage 1: Builder
+# Stage 1: Build - Instala dependências
 FROM python:3.13-slim as builder
 
-# Instalar Poetry
-RUN pip install poetry
-
-# Definir o diretório de trabalho
 WORKDIR /app
 
-# Copiar os arquivos de dependências
-COPY pyproject.toml poetry.lock ./
+# Copia os arquivos de dependência
+COPY pyproject.toml poetry.lock ./ 
 
-RUN poetry config virtualenvs.in-project true
 
-# Instalar dependências do projeto
-# --no-root: não instala o pacote do projeto em si
-# --no-dev: não instala as dependências de desenvolvimento
-RUN poetry install --no-root
 
-# Stage 2: Final Image
-FROM python:3.13-slim
+# Instala o Poetry
+RUN pip install --no-cache-dir poetry
 
-# Definir o diretório de trabalho
-WORKDIR /app
+# Instala as dependências do projeto
+RUN poetry config virtualenvs.create false && \
+    poetry install --only main --no-interaction --no-ansi --no-root
+    
+# Copia o código da aplicação
+COPY . .
 
-# Copiar o ambiente virtual do builder
-COPY --from=builder /app/.venv /app/.venv
+# Cria usuário não-root e define permissões
+RUN useradd -m app && chown -R app:app /app
+USER app
 
-# Ativar o ambiente virtual
-ENV PATH="/app/.venv/bin:$PATH"
 
-# Copiar o código da aplicação
-COPY ./app /app/app
-
-# Expor a porta que o FastAPI vai usar
+# Expõe a porta da aplicação
 EXPOSE 8000
+
+# Comando para iniciar a aplicação
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Instala curl para o healthcheck
+USER root
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+USER app
+
+# Healthcheck para verificar se a aplicação está rodando
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8000/api/v1/health || exit 1
