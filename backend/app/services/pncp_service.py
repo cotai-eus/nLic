@@ -3,6 +3,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta, date
 
 from app.models.perfil import PerfilDeInteresse
+from app.utils.filters import filtrar_por_palavra_chave
 
 PNCP_API_BASE_URL = "https://pncp.gov.br/api/consulta/v1"
 
@@ -48,8 +49,7 @@ async def search_contratacoes_proposta(perfil: PerfilDeInteresse) -> List[Dict[s
     filtered_opportunities = []
     for item in opportunities:
         if perfil.palavrasChave:
-            objeto_compra = item.get("objetoContratacao", "").lower()
-            if any(keyword.lower() in objeto_compra for keyword in perfil.palavrasChave):
+            if filtrar_por_palavra_chave(item.get("objetoContratacao", ""), perfil.palavrasChave):
                 filtered_opportunities.append(item)
         else:
             filtered_opportunities.append(item)
