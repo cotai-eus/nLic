@@ -12,7 +12,7 @@ from app.workers import radar_worker
 celery_app.conf.beat_schedule = {
     'monitor-opportunities-every-30-minutes': {
         'task': 'app.workers.radar_worker.monitor_opportunities',
-        'schedule': 1800.0,  # 30 minutes in seconds
+        'schedule': 28800.0,  # 8 hours in seconds
     },
 }
 

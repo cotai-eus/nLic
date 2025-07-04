@@ -1,0 +1,34 @@
+services:
+  backend-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nradar_backend_test
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=${TEST_DATABASE_URL}
+    command: ["poetry", "run", "pytest"]
+    networks:
+      - nradar_test_net
+
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: nradar_postgres_test
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${TEST_POSTGRES_DB}
+    networks:
+      - nradar_test_net
+
+  redis-test:
+    image: redis:7-alpine
+    container_name: nradar_redis_test
+    networks:
+      - nradar_test_net
+
+networks:
+  nradar_test_net:
+    driver: bridge

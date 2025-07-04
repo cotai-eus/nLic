@@ -3,7 +3,7 @@ from dotenv import load_dotenv; load_dotenv()
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1.endpoints import perfis
+from app.api.v1.endpoints import perfis, contratacoes, pca, atas, contratos
 from app.auth.fastapi_users import fastapi_users, auth_backend
 from app.core.config import settings
 from app.auth.schemas import UserRead, UserCreate
@@ -44,7 +44,16 @@ app.include_router(
 )
 
 app.include_router(perfis.router)
+app.include_router(contratacoes.router)
+app.include_router(pca.router)
+app.include_router(atas.router)
+app.include_router(contratos.router)
 
 @app.get("/")
 def read_root():
     return {"message": "Bem-vindo à API do nRadar!"}
+
+
+@app.get("/api/v1/health")
+def health_check():
+    return {"status": "ok"}
